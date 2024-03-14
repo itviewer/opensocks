@@ -1,0 +1,110 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Release
+
+on:
+  workflow_dispatch
+
+jobs:
+  setup:
+    name: Setup
+    uses: tlslink/vpnagent/.github/workflows/release-setup.yml@main
+  build:
+    name: Build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        build: [linux, linux-arm64, linux-armv7, linux-mipsle, windows, windows-arm64, macos, macos-arm64]
+        include:
+        - build: linux
+          os: ubuntu-20.04
+          go: 1.22.1
+          archive-name: opensocks-linux-amd64.tar.gz
+        - build: linux-arm64
+          os: ubuntu-20.04
+          go: 1.22.1
+          archive-name: opensocks-linux-arm64.tar.gz
+        - build: linux-armv7
+          os: ubuntu-20.04
+          go: 1.22.1
+          archive-name: opensocks-linux-armv7.tar.gz
+        - build: linux-mipsle
+          os: ubuntu-20.04
+          go: 1.22.1
+          archive-name: opensocks-linux-mipsle.tar.gz
+        - build: windows
+          os: windows-2019
+          go: 1.22.1
+          archive-name: opensocks-windows10-amd64.7z
+        - build: windows-arm64
+          os: windows-2019
+          go: 1.22.1
+          archive-name: opensocks-windows10-arm64.7z
+        - build: macos
+          os: macos-12
+          go: 1.22.1
+          archive-name: opensocks-macOS-amd64.tar.gz
+        - build: macos-arm64
+          os: macos-14
+          go: 1.22.1
+          archive-name: opensocks-macOS-arm64.tar.gz
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ matrix.go }}
+    - name: Install dependencies
+      run: go get .
+    - name: Build
+      shell: bash
+      run: |
+        if [ "${{ matrix.build }}" = "linux" ]; then
+          go build -trimpath -ldflags "-s -w" -o opensocks main.go
+        elif [ "${{ matrix.build }}" = "linux-arm64" ]; then
+          GOOS=linux GOARCH=arm64 go build -trimpath -ldflags "-s -w" -o opensocks main.go
+        elif [ "${{ matrix.build }}" = "linux-armv7" ]; then
+          GOOS=linux GOARM=7 GOARCH=arm go build -trimpath -ldflags "-s -w" -o opensocks main.go
+        elif [ "${{ matrix.build }}" = "linux-mipsle" ]; then
+          GOOS=linux GOARCH=mipsle go build -trimpath -ldflags "-s -w" -o opensocks main.go
+        elif [ "${{ matrix.build }}" = "windows" ]; then
+          go build -trimpath -ldflags "-s -w" -o opensocks.exe main.go
+        elif [ "${{ matrix.build }}" = "windows-arm64" ]; then
+          GOARCH=arm64 go build -trimpath -ldflags "-s -w" -o opensocks.exe main.go
+        elif [ "${{ matrix.build }}" = "macos" ]; then
+          go build -trimpath -ldflags "-s -w" -o opensocks main.go
+        elif [ "${{ matrix.build }}" = "macos-arm64" ]; then
+          go build -trimpath -ldflags "-s -w" -o opensocks main.go
+        fi
+    - name: Build archive
+      shell: bash
+      run: |
+        mkdir archive
+        cp LICENSE README.md archive/
+        # ls -lR
+        if [ "${{ matrix.build }}" = "windows" -o "${{ matrix.build }}" = "windows-arm64" ]; then
+          cp opensocks.exe ./archive/
+          cd archive
+          7z a "${{ matrix.archive-name }}" LICENSE README.md opensocks.exe
+        else
+          cp opensocks ./archive/
+          cd archive
+          tar -czf "${{ matrix.archive-name }}" LICENSE README.md opensocks
+        fi
+    - name: Continuous release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/heads/')
+      with:
+        prerelease: false
+        files: archive/${{ matrix.archive-name }}
+        tag_name: continuous
+        
+    - if: startsWith(github.ref, 'refs/tags/')
+      name: Tagged release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: archive/${{ matrix.archive-name }}
+        name: Release build (${{ github.ref_name }})
