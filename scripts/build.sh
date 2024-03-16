@@ -1,7 +1,7 @@
 #!/bin/bash
 RELEASE_BIN_DIR='./bin/'
 RELEASE_NAME='opensocks'
-PACKAGE_NAME='github.com/net-byte/opensocks/common'
+PACKAGE_NAME='github.com/itviewer/opensocks/common'
 
 # create dir
 function create_dir() {
@@ -25,15 +25,12 @@ function main() {
     go clean
     go mod tidy
     create_dir $RELEASE_BIN_DIR
-    go_build linux 386
     go_build linux amd64
     go_build linux arm
     go_build linux arm64
     go_build darwin arm64
     go_build darwin amd64
-    go_build windows 386
     go_build windows amd64
-    go_build windows arm
     go_build windows arm64
 }
 

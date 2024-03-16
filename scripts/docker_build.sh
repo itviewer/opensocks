@@ -12,7 +12,7 @@ TAG=$ARCH
 fi
 echo "build $NAME:$TAG"
 git pull
-docker build . -t netbyte/$NAME:$TAG
-docker image push netbyte/$NAME:$TAG
+docker build . -t itviewer/$NAME:$TAG
+docker image push itviewer/$NAME:$TAG
 
 echo "DONE!!!"

@@ -8,27 +8,27 @@ A simple multiplexing proxy.
 
 # Usage
 ```
-Usage of opensocks:
+Usage of ./opensocks:
   -S	server mode
   -bypass
-      bypass private ip
-  -k string
-      encryption key (default "6w9z$C&F)J@NcRfUjXn2r4u7x!A%D*G-")
-  -l string
-      local socks5 proxy address (default "127.0.0.1:1080")
-  -obfs
-      enable data obfuscation
+    	bypass private ip
   -compress
-      enable data compression
-  -p string
-      protocol ws/wss/kcp/tcp (default "wss")
-  -s string
-      server address (default ":8081")
+    	enable data compression
   -http string
-        local http proxy address (default ":8008")
+    	local http proxy address (default ":8008")
   -http-proxy
-        enable http proxy
-  -v    enable verbose output
+    	enable http proxy
+  -k string
+    	encryption key (default "6w9z$C&F)J@NcRfUjXn2r4u7x!A%D*G-")
+  -l string
+    	local socks5 proxy address (default "127.0.0.1:1080")
+  -obfs
+    	enable data obfuscation
+  -p string
+    	protocol tcp/ws/kcp (default "tcp")
+  -s string
+    	server address (default ":8081")
+  -v	enable verbose output
 ```
 # Run
 ## Run client
@@ -77,13 +77,13 @@ sysctl -p /etc/sysctl.conf
 ```
 
 # Cross-platform client
-[opensocks-gui](https://github.com/net-byte/opensocks-gui)
+[opensocks-gui](https://github.com/itviewer/opensocks-gui)
 <p>
 <a href="https://play.google.com/store/apps/details?id=com.netbyte.opensocks"><img src="https://play.google.com/intl/en_us/badges/images/generic/en-play-badge.png" height="100"></a>
 </p>
 
 # Deploy to cloud
-[opensocks-cloud](https://github.com/net-byte/opensocks-cloud)
+[opensocks-cloud](https://github.com/itviewer/opensocks-cloud)
 
 # License
 [The MIT License (MIT)](https://raw.githubusercontent.com/net-byte/opensocks/main/LICENSE)

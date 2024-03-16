@@ -1,13 +1,22 @@
 package pool
 
 import (
-	"github.com/net-byte/opensocks/common/enum"
-	"github.com/oxtoacart/bpool"
+    "github.com/itviewer/opensocks/common/enum"
+    "sync"
 )
 
-// BytePool is a byte pool
-var BytePool *bpool.BytePool
+var pool = sync.Pool{
+    New: func() interface{} {
+        b := make([]byte, enum.BufferSize)
+        return b
+    },
+}
 
-func init() {
-	BytePool = bpool.NewBytePool(128, enum.BufferSize)
+func Get() []byte {
+    buf := pool.Get().([]byte)
+    return buf
+}
+
+func Put(buf []byte) {
+    pool.Put(buf)
 }

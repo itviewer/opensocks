@@ -1,3 +1,9 @@
+.idea/*
+!.idea/codeStyles
+!.idea/*.iml
+!.idea/modules.xml
+.http/http-client.private.env.json
+
 # Mac OS X files
 .DS_Store
 # Binaries for programs and plugins
@@ -17,4 +23,5 @@ logs/
 bin/
 .aar
 .java
+opensocks
 
