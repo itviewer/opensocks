@@ -1,4 +1,4 @@
-# Opensocks
+# OpenSocks
 
 A simple multiplexing proxy.
 
@@ -81,9 +81,6 @@ sysctl -p /etc/sysctl.conf
 <p>
 <a href="https://play.google.com/store/apps/details?id=com.netbyte.opensocks"><img src="https://play.google.com/intl/en_us/badges/images/generic/en-play-badge.png" height="100"></a>
 </p>
-
-# Deploy to cloud
-[opensocks-cloud](https://github.com/itviewer/opensocks-cloud)
 
 # License
 [The MIT License (MIT)](https://raw.githubusercontent.com/net-byte/opensocks/main/LICENSE)

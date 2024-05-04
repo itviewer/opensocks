@@ -4,10 +4,10 @@ import (
     "bufio"
     "bytes"
     "encoding/binary"
+    "github.com/itviewer/opensocks/base"
 
     "github.com/golang/snappy"
     "github.com/itviewer/opensocks/common/cipher"
-    "github.com/itviewer/opensocks/config"
 )
 
 // Encode encodes a byte array into a byte array
@@ -45,22 +45,22 @@ func Decode(reader *bufio.Reader) ([]byte, int32, error) {
     return pack[4:], dlen, nil
 }
 
-func EncodeData(b []byte, config config.Config) []byte {
-    if config.Obfs {
+func EncodeData(b []byte) []byte {
+    if base.Cfg.Obfs {
         b = cipher.XOR(b)
     }
-    if config.Compress {
+    if base.Cfg.Compress {
         b = snappy.Encode(nil, b)
     }
     return b
 }
 
-func DecodeData(b []byte, config config.Config) ([]byte, error) {
+func DecodeData(b []byte) ([]byte, error) {
     var err error
-    if config.Compress {
+    if base.Cfg.Compress {
         b, err = snappy.Decode(nil, b)
     }
-    if config.Obfs {
+    if base.Cfg.Obfs {
         b = cipher.XOR(b)
     }
     return b, err

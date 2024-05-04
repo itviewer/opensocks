@@ -4,8 +4,8 @@ import (
     "context"
     "fmt"
     "github.com/gorilla/websocket"
+    "github.com/itviewer/opensocks/base"
     "github.com/itviewer/opensocks/common/enum"
-    "github.com/itviewer/opensocks/config"
     "github.com/itviewer/opensocks/counter"
     "io"
     "log"
@@ -28,18 +28,18 @@ var _defaultHomePage = []byte(`
 var _wsUpgrader = websocket.Upgrader{ReadBufferSize: enum.BufferSize, WriteBufferSize: enum.BufferSize}
 
 type WSProxy struct {
-    config config.Config
+    config base.Config
     server http.Server
 }
 
-func (p *WSProxy) StartServer() {
+func (p *WSProxy) StartProxyServer() {
     http.HandleFunc(enum.WSPath, func(w http.ResponseWriter, r *http.Request) {
         conn, err := _wsUpgrader.Upgrade(w, r, nil)
         if err != nil {
-            log.Printf("[server] failed to upgrade http %v", err)
+            base.Error("failed to upgrade WebSocket", err)
             return
         }
-        p.Handler(conn.UnderlyingConn())
+        p.Handler(conn.NetConn())
     })
 
     http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
@@ -64,19 +64,19 @@ func (p *WSProxy) StartServer() {
         io.WriteString(w, counter.PrintServerBytes())
     })
 
-    log.Printf("opensocks ws server started on %s", p.config.ServerAddr)
+    base.Info("opensocks ws server started on", p.config.ServerAddr)
     p.server = http.Server{
         Addr: p.config.ServerAddr,
     }
     p.server.ListenAndServe()
 }
 
-func (p *WSProxy) StopServer() {
+func (p *WSProxy) StopProxyServer() {
     if err := p.server.Shutdown(context.Background()); err != nil {
         log.Printf("failed to shutdown ws server: %v", err)
     }
 }
 
 func (p *WSProxy) Handler(conn net.Conn) {
-    MuxHandler(conn, p.config)
+    MuxHandler(conn)
 }

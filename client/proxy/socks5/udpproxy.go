@@ -4,12 +4,10 @@ import (
     "net"
 
     "github.com/itviewer/opensocks/common/pool"
-    "github.com/itviewer/opensocks/config"
 )
 
 // The UDPProxy struct
 type UDPProxy struct {
-    Config config.Config
 }
 
 // Proxy handles the udp connection

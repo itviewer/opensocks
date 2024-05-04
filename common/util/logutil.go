@@ -1,32 +1,35 @@
 package util
 
 import (
-    "log"
+    "github.com/itviewer/opensocks/base"
     "time"
 
     "github.com/itviewer/opensocks/counter"
 )
 
-// PrintLog returns the log
-func PrintLog(enableVerbose bool, format string, v ...any) {
-    if !enableVerbose {
-        return
-    }
-    log.Printf("[info] "+format, v)
-}
-
 // PrintStats returns the stats info
-func PrintStats(enableVerbose bool, serverMode bool) {
-    if !enableVerbose {
+func PrintStats() {
+    if !base.Cfg.Debug {
         return
     }
     go func() {
+        // 目前只有本函数使用 CloseChan，所以暂时放在这里
+        counter.CloseChan = make(chan struct{})
+
+        ticker := time.NewTicker(10 * time.Second)
+
         for {
-            time.Sleep(30 * time.Second)
-            if serverMode {
-                log.Printf("stats:%v", counter.PrintServerBytes())
-            } else {
-                log.Printf("stats:%v", counter.PrintClientBytes())
+            select {
+            case <-ticker.C:
+                if base.Cfg.ServerMode {
+                    base.Debug("stats:", counter.PrintServerBytes())
+                } else {
+                    base.Debug("stats:", counter.PrintClientBytes())
+                }
+            case <-counter.CloseChan:
+                ticker.Stop()
+                base.Debug("stats timer exit")
+                return
             }
         }
     }()

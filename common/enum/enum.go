@@ -35,9 +35,9 @@ const (
 )
 
 const (
-    Timeout    int    = 60
+    Timeout    int    = 30
     BufferSize int    = 64 * 1024
-    WSPath     string = "/freedom"
+    WSPath     string = "/ws"
     SndWnd     int    = 10240
     RcvWnd     int    = 10240
     SockBuf    int    = 4 * 1024 * 1024

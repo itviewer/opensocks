@@ -1,16 +1,14 @@
 package socks5
 
 import (
-    "log"
+    "github.com/itviewer/opensocks/base"
     "net"
 
     "github.com/itviewer/opensocks/common/enum"
     "github.com/itviewer/opensocks/common/pool"
-    "github.com/itviewer/opensocks/config"
 )
 
 type TCPServer struct {
-    Config   config.Config
     TCPProxy *TCPProxy
     UDPProxy *UDPProxy
     UDPConn  *net.UDPConn
@@ -18,15 +16,17 @@ type TCPServer struct {
 }
 
 func (t *TCPServer) Start() {
-    log.Printf("opensocks [tcp] local server started on %s", t.Config.LocalAddr)
     var err error
-    t.Listener, err = net.Listen("tcp", t.Config.LocalAddr)
+    t.Listener, err = net.Listen("tcp", base.Cfg.LocalAddr)
     if err != nil {
-        log.Panicf("[tcp] failed to listen tcp %v", err)
+        base.Error("failed to listen tcp server", err)
+        return
     }
+    base.Info("tcp server started on", base.Cfg.LocalAddr)
     for {
         tcpConn, err := t.Listener.Accept()
         if err != nil {
+            base.Error("tcp server", err)
             break
         }
         go t.handler(tcpConn)
@@ -76,9 +76,9 @@ func (t *TCPServer) cmd(tcpConn net.Conn) {
     case enum.AssociateCommand:
         t.UDPProxy.Proxy(tcpConn, t.UDPConn)
         return
-    case enum.BindCommand:
-        resp(tcpConn, enum.CommandNotSupported)
-        return
+    // case enum.BindCommand:
+    //     resp(tcpConn, enum.CommandNotSupported)
+    //     return
     default:
         resp(tcpConn, enum.CommandNotSupported)
         return

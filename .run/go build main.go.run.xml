@@ -3,7 +3,7 @@
     <module name="opensocks" />
     <working_directory value="$PROJECT_DIR$" />
     <go_parameters value="-o opensocks" />
-    <parameters value="-s=anylink.pro:1080 -k=itviewer -http=:8008 -http-proxy -v -p tcp" />
+    <parameters value="-s=vpn.easysoc.cn:1081 -k=itviewer -http-proxy -v -p tcp" />
     <kind value="FILE" />
     <package value="vpnagent" />
     <directory value="$PROJECT_DIR$" />

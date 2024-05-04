@@ -2,55 +2,51 @@ package api
 
 import (
     "encoding/json"
-    "log"
-    "strconv"
-    "sync/atomic"
-
+    "fmt"
+    "github.com/inhies/go-bytesize"
+    "github.com/itviewer/opensocks/base"
     "github.com/itviewer/opensocks/client"
-    "github.com/itviewer/opensocks/config"
     "github.com/itviewer/opensocks/counter"
-    "github.com/itviewer/opensocks/server"
+    "sync"
+    "sync/atomic"
 )
 
-// Start starts the app by json config
-func Start(jsonConfig string) {
-    CleanCounter()
-    config := config.Config{}
-    err := json.Unmarshal([]byte(jsonConfig), &config)
+var closeOnce sync.Once
+
+// StartClient starts the app by json config
+func StartClient(jsonConfig string) {
+    err := json.Unmarshal([]byte(jsonConfig), &base.Cfg)
     if err != nil {
-        log.Panic("failed to decode config")
+        fmt.Println("failed to unmarshal config")
+        return
     }
-    config.Init()
-    if config.ServerMode {
-        server.Start(config)
-    } else {
-        client.Start(config)
-    }
+    // post init
+    base.InitConfig()
+    // need log config
+    base.InitLog()
+
+    closeOnce = sync.Once{}
+    counter.Clean()
+
+    // must not server mode
+    // 进入事件循环
+    client.Start()
 }
 
 // StopClient stops the client
 func StopClient() {
-    client.Stop()
-    CleanCounter()
-}
-
-// StopServer stops the server
-func StopServer() {
-    server.Stop()
-    CleanCounter()
+    closeOnce.Do(func() {
+        client.Stop()
+        counter.Clean()
+    })
 }
 
 // GetTotalReadBytes returns the total read bytes
 func GetTotalReadBytes() string {
-    return strconv.FormatUint(atomic.LoadUint64(&counter.TotalReadBytes), 10)
+    return bytesize.New(float64(atomic.LoadUint64(&counter.TotalReadBytes))).String()
 }
 
 // GetTotalWrittenBytes returns the total written bytes
 func GetTotalWrittenBytes() string {
-    return strconv.FormatUint(atomic.LoadUint64(&counter.TotalWrittenBytes), 10)
-}
-
-// CleanCounter cleans the counter
-func CleanCounter() {
-    counter.Clean()
+    return bytesize.New(float64(atomic.LoadUint64(&counter.TotalWrittenBytes))).String()
 }

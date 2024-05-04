@@ -3,7 +3,8 @@ package socks5
 import (
     "bytes"
     "encoding/binary"
-    "log"
+    "fmt"
+    "github.com/itviewer/opensocks/base"
     "net"
     "strconv"
 
@@ -45,7 +46,7 @@ func parseUDPData(b []byte) (dstAddr *net.UDPAddr, header []byte, data []byte) {
        +----+------+------+----------+----------+----------+
     */
     if b[2] != 0x00 {
-        log.Printf("[udp] not support frag %v", b[2])
+        base.Error(fmt.Sprintf("not support frag %v", b[2]))
         return nil, nil, nil
     }
     switch b[3] {
@@ -61,7 +62,7 @@ func parseUDPData(b []byte) (dstAddr *net.UDPAddr, header []byte, data []byte) {
         domain := string(b[5 : 5+dlen])
         ipAddr, err := net.ResolveIPAddr("ip", domain)
         if err != nil {
-            log.Printf("[udp] failed to resolve dns %s:%v", domain, err)
+            base.Error(fmt.Sprintf("failed to resolve dns %s:%v", domain, err))
             return nil, nil, nil
         }
         dstAddr = &net.UDPAddr{

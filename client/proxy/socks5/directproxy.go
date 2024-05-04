@@ -7,14 +7,13 @@ import (
     "time"
 
     "github.com/itviewer/opensocks/common/enum"
-    "github.com/itviewer/opensocks/config"
 )
 
 // Direct is a direct proxy
-func directProxy(conn net.Conn, host string, port string, config config.Config) {
+func directProxy(conn net.Conn, host string, port string) {
     rconn, err := net.DialTimeout("tcp", net.JoinHostPort(host, port), time.Duration(enum.Timeout)*time.Second)
     if err != nil {
-        log.Printf("[tcp] failed to dial tcp %v", err)
+        log.Printf("failed to dial tcp %v", err)
         resp(conn, enum.ConnectionRefused)
         return
     }

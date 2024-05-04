@@ -1,23 +1,22 @@
 package proxy
 
 import (
-    "github.com/itviewer/opensocks/config"
-    "log"
+    "github.com/itviewer/opensocks/base"
     "net"
 )
 
 type TCPProxy struct {
-    config   config.Config
     listener net.Listener
 }
 
-func (p *TCPProxy) StartServer() {
+func (p *TCPProxy) StartProxyServer() {
     var err error
-    if p.listener, err = net.Listen("tcp", p.config.ServerAddr); err == nil {
-        log.Printf("opensocks tcp server started on %s", p.config.ServerAddr)
+    if p.listener, err = net.Listen("tcp", base.Cfg.ServerAddr); err == nil {
+        base.Info("opensocks tcp server started on", base.Cfg.ServerAddr)
         for {
             conn, err := p.listener.Accept()
             if err != nil {
+                base.Error(err)
                 break
             }
             go p.Handler(conn)
@@ -25,12 +24,12 @@ func (p *TCPProxy) StartServer() {
     }
 }
 
-func (p *TCPProxy) StopServer() {
+func (p *TCPProxy) StopProxyServer() {
     if err := p.listener.Close(); err != nil {
-        log.Printf("failed to shutdown tcp server: %v", err)
+        base.Error("failed to shutdown tcp server:", err)
     }
 }
 
 func (p *TCPProxy) Handler(conn net.Conn) {
-    MuxHandler(conn, p.config)
+    MuxHandler(conn)
 }

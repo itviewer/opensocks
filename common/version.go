@@ -1,33 +1,37 @@
 package common
 
-import "log"
+import (
+    "github.com/itviewer/opensocks/base"
+    "log"
+)
 
 var (
     Version   = "v1.8.0"
     GitHash   = ""
     BuildTime = ""
     GoVersion = ""
-    Banner    = `
-	___                                        _        
-	/ _ \   _ __   ___   _ _    ___  ___   __  | |__  ___
-	| (_) | | '_ \ / -_) | ' \  (_-< / _ \ / _| | / / (_-<
-	\___/  | .__/ \___| |_||_| /__/ \___/ \__| |_\_\ /__/
-		 |_|                                           
+    // Banner Small Slant
+    Banner = `
+      ____                ____         __      
+     / __ \___  ___ ___  / __/__  ____/ /__ ___
+    / /_/ / _ \/ -_) _ \_\ \/ _ \/ __/  '_/(_-<
+    \____/ .__/\__/_//_/___/\___/\__/_/\_\/___/
+        /_/                                                                                                                 
 	`
 )
 
 func DisplayVersionInfo() {
     log.Printf("%s", Banner)
     if Version != "" {
-        log.Printf("version -> %s", Version)
+        base.Info("version ->", Version)
     }
     if GitHash != "" {
-        log.Printf("git hash -> %s", GitHash)
+        base.Info("git hash ->", GitHash)
     }
     if BuildTime != "" {
-        log.Printf("build time -> %s", BuildTime)
+        base.Info("build time ->", BuildTime)
     }
     if GoVersion != "" {
-        log.Printf("go version -> %s", GoVersion)
+        base.Info("go version ->", GoVersion)
     }
 }

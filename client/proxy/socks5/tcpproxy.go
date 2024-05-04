@@ -1,24 +1,21 @@
 package socks5
 
 import (
+    "github.com/itviewer/opensocks/base"
     "github.com/itviewer/opensocks/client/proxy"
     "github.com/itviewer/opensocks/codec"
     "github.com/itviewer/opensocks/common/enum"
     "github.com/itviewer/opensocks/common/handshake"
     "github.com/itviewer/opensocks/common/pool"
-    "github.com/itviewer/opensocks/common/util"
-    "github.com/itviewer/opensocks/config"
     "github.com/itviewer/opensocks/counter"
     "github.com/xtaci/smux"
     "io"
-    "log"
     "net"
     "sync"
 )
 
 // TCPProxy The tcp proxy struct
 type TCPProxy struct {
-    Config  config.Config
     Session *smux.Session
     Lock    sync.Mutex
 }
@@ -30,17 +27,17 @@ func (t *TCPProxy) Proxy(tcpConn net.Conn, req []byte) {
         return
     }
     // bypass private ip
-    if t.Config.Bypass {
+    if base.Cfg.Bypass {
         ip := net.ParseIP(host)
         if ip != nil && ip.IsPrivate() {
-            directProxy(tcpConn, host, port, t.Config)
+            directProxy(tcpConn, host, port)
             return
         }
     }
     t.Lock.Lock()
     if t.Session == nil {
         var err error
-        xconn := proxy.SetupTunnel(t.Config)
+        xconn := proxy.SetupTunnel()
         if xconn == nil {
             t.Lock.Unlock()
             resp(tcpConn, enum.ConnectionRefused)
@@ -49,7 +46,7 @@ func (t *TCPProxy) Proxy(tcpConn net.Conn, req []byte) {
         t.Session, err = newMuxSession(xconn)
         if err != nil || t.Session == nil {
             t.Lock.Unlock()
-            util.PrintLog(t.Config.Verbose, "failed to open client:%v", err)
+            base.Error("failed to initialize a new smux connection:", err)
             resp(tcpConn, enum.ConnectionRefused)
             return
         }
@@ -59,14 +56,14 @@ func (t *TCPProxy) Proxy(tcpConn net.Conn, req []byte) {
     stream, err := t.Session.Open()
     if err != nil {
         t.Session = nil
-        util.PrintLog(t.Config.Verbose, "failed to open session:%v", err)
+        base.Debug("failed to open smux session:", err)
         resp(tcpConn, enum.ConnectionRefused)
         return
     }
-    ok := handshake.ConnectToHost(stream, "tcp", host, port, t.Config.Key, t.Config.Obfs)
+    ok := handshake.HelloToTarget(stream, "tcp", host, port, base.Cfg.Key, base.Cfg.Obfs)
     if !ok {
         t.Session = nil
-        log.Println("[tcp] failed to handshake")
+        base.Error("failed to handshake to", host)
         resp(tcpConn, enum.ConnectionRefused)
         return
     }
@@ -87,7 +84,7 @@ func (t *TCPProxy) toServer(stream io.ReadWriteCloser, tcpconn net.Conn) {
             break
         }
         b := buffer[:n]
-        b = codec.EncodeData(b, t.Config)
+        b = codec.EncodeData(b)
         _, err = stream.Write(b)
         if err != nil {
             break
@@ -108,9 +105,9 @@ func (t *TCPProxy) toClient(stream io.ReadWriteCloser, tcpconn net.Conn) {
             break
         }
         b := buffer[:n]
-        b, err = codec.DecodeData(b, t.Config)
+        b, err = codec.DecodeData(b)
         if err != nil {
-            util.PrintLog(t.Config.Verbose, "failed to decode:%v", err)
+            base.Debug("failed to decode:", err)
             break
         }
         _, err = tcpconn.Write(b)

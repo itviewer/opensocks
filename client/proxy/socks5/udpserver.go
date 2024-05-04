@@ -2,18 +2,16 @@ package socks5
 
 import (
     "bytes"
+    "github.com/itviewer/opensocks/base"
     "github.com/itviewer/opensocks/client/proxy"
     "github.com/itviewer/opensocks/common/handshake"
     "github.com/itviewer/opensocks/common/pool"
     "io"
-    "log"
     "net"
     "strconv"
     "sync"
 
     "github.com/itviewer/opensocks/codec"
-    "github.com/itviewer/opensocks/common/util"
-    "github.com/itviewer/opensocks/config"
     "github.com/itviewer/opensocks/counter"
     "github.com/xtaci/smux"
 )
@@ -21,7 +19,6 @@ import (
 type UDPServer struct {
     TCPProxy  *TCPProxy
     UDPConn   *net.UDPConn
-    Config    config.Config
     headerMap sync.Map
     streamMap sync.Map
     Session   *smux.Session
@@ -30,14 +27,15 @@ type UDPServer struct {
 
 // Start the UDP server
 func (u *UDPServer) Start() *net.UDPConn {
-    udpAddr, _ := net.ResolveUDPAddr("udp", u.Config.LocalAddr)
+    udpAddr, _ := net.ResolveUDPAddr("udp", base.Cfg.LocalAddr)
     var err error
     u.UDPConn, err = net.ListenUDP("udp", udpAddr)
     if err != nil {
-        log.Panicf("[udp] failed to listen udp %v", err)
+        base.Error("failed to listen udp", err)
+        return nil
     }
+    base.Info("udp server started on", base.Cfg.LocalAddr)
     go u.toServer()
-    log.Printf("opensocks [udp] local server started on %v", u.Config.LocalAddr)
     return u.UDPConn
 }
 
@@ -62,14 +60,14 @@ func (u *UDPServer) toServer() {
             u.Lock.Lock()
             if u.Session == nil {
                 var err error
-                xconn := proxy.SetupTunnel(u.Config)
+                xconn := proxy.SetupTunnel()
                 if xconn == nil {
                     u.Lock.Unlock()
                     continue
                 }
                 u.Session, err = newMuxSession(xconn)
                 if err != nil || u.Session == nil {
-                    log.Println(err)
+                    base.Error(err)
                     u.Lock.Unlock()
                     continue
                 }
@@ -78,13 +76,13 @@ func (u *UDPServer) toServer() {
             stream, err = u.Session.Open()
             if err != nil {
                 u.Session = nil
-                util.PrintLog(u.Config.Verbose, "failed to open session:%v", err)
+                base.Error("failed to open smux session:", err)
                 continue
             }
-            ok := handshake.ConnectToHost(stream, "udp", dstAddr.IP.String(), strconv.Itoa(dstAddr.Port), u.Config.Key, u.Config.Obfs)
+            ok := handshake.HelloToTarget(stream, "udp", dstAddr.IP.String(), strconv.Itoa(dstAddr.Port), base.Cfg.Key, base.Cfg.Obfs)
             if !ok {
                 u.Session = nil
-                log.Println("[udp] failed to handshake")
+                base.Error("failed to handshake to", dstAddr.IP.String())
                 continue
             }
             u.streamMap.Store(key, stream)
@@ -93,7 +91,7 @@ func (u *UDPServer) toServer() {
         } else {
             stream = value.(io.ReadWriteCloser)
         }
-        data = codec.EncodeData(data, u.Config)
+        data = codec.EncodeData(data)
         stream.Write(data)
         counter.IncrWrittenBytes(n)
     }
@@ -112,9 +110,9 @@ func (u *UDPServer) toClient(stream io.ReadWriteCloser, cliAddr *net.UDPAddr) {
         }
         if header, ok := u.headerMap.Load(key); ok {
             b := buffer[:n]
-            b, err = codec.DecodeData(b, u.Config)
+            b, err = codec.DecodeData(b)
             if err != nil {
-                util.PrintLog(u.Config.Verbose, "failed to decode:%v", err)
+                base.Error("failed to decode:", err)
                 break
             }
             var data bytes.Buffer

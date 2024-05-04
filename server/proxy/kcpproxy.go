@@ -1,28 +1,27 @@
 package proxy
 
 import (
+    "github.com/itviewer/opensocks/base"
     "github.com/itviewer/opensocks/common/enum"
-    "log"
     "net"
     "time"
 
-    "github.com/itviewer/opensocks/config"
     "github.com/xtaci/kcp-go/v5"
 )
 
 type KCPProxy struct {
-    config   config.Config
+    config   base.Config
     listener *kcp.Listener
 }
 
-func (p *KCPProxy) StartServer() {
+func (p *KCPProxy) StartProxyServer() {
     // key := pbkdf2.Key([]byte(p.config.Key), []byte("opensocks@2022"), 4096, 32, sha1.New)
     // block, _ := kcp.NewSalsa20BlockCrypt(key)
     var err error
     p.listener, err = kcp.ListenWithOptions(p.config.ServerAddr, nil, 10, 0)
 
     if err == nil {
-        log.Printf("opensocks kcp server started on %s", p.config.ServerAddr)
+        base.Info("opensocks kcp server started on", p.config.ServerAddr)
         for {
             conn, err := p.listener.AcceptKCP()
             if err != nil {
@@ -47,12 +46,12 @@ func (p *KCPProxy) StartServer() {
     }
 }
 
-func (p *KCPProxy) StopServer() {
+func (p *KCPProxy) StopProxyServer() {
     if err := p.listener.Close(); err != nil {
-        log.Printf("failed to shutdown kcp server: %v", err)
+        base.Error("failed to shutdown kcp server:", err)
     }
 }
 
 func (p *KCPProxy) Handler(conn net.Conn) {
-    MuxHandler(conn, p.config)
+    MuxHandler(conn)
 }

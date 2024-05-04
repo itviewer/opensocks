@@ -4,44 +4,45 @@ import (
     "context"
     "fmt"
     "github.com/gorilla/websocket"
+    "github.com/itviewer/opensocks/base"
     "github.com/itviewer/opensocks/common/enum"
-    "github.com/itviewer/opensocks/config"
     utls "github.com/refraction-networking/utls"
     "github.com/xtaci/kcp-go/v5"
-    "log"
     "net"
     "strings"
     "time"
 )
 
-func SetupTunnel(config config.Config) net.Conn {
-    protocol := strings.ToLower(config.Protocol)
+func SetupTunnel() net.Conn {
+    protocol := strings.ToLower(base.Cfg.Protocol)
     switch protocol {
-    case "ws":
-        return connectWSServer(config)
+    case "tcp":
+        return connectTCPServer()
     case "kcp":
-        return connectKCPServer(config)
+        return connectKCPServer()
+    case "ws":
+        return connectWSServer()
     default:
-        return connectTCPServer(config)
+        return nil // 拼写错误
     }
 }
 
-func connectTCPServer(config config.Config) net.Conn {
-    conn, err := net.DialTimeout("tcp", config.ServerAddr, time.Duration(enum.Timeout)*time.Second)
+func connectTCPServer() net.Conn {
+    conn, err := net.DialTimeout("tcp", base.Cfg.ServerAddr, time.Duration(enum.Timeout)*time.Second)
     if err != nil {
-        log.Printf("[client] failed to dial tcp server %s %v", config.ServerAddr, err)
+        base.Error("failed to dial tcp server", base.Cfg.ServerAddr)
         return nil
     }
-    log.Printf("[client] tcp tunnel connected %s", config.ServerAddr)
+    base.Info("tcp tunnel connected", base.Cfg.ServerAddr)
     return conn
 }
 
-func connectKCPServer(config config.Config) net.Conn {
+func connectKCPServer() net.Conn {
     // key := pbkdf2.Key([]byte(config.Key), []byte("opensocks@2022"), 4096, 32, sha1.New)
     // block, _ := kcp.NewSalsa20BlockCrypt(key)
-    conn, err := kcp.DialWithOptions(config.ServerAddr, nil, 10, 0)
+    conn, err := kcp.DialWithOptions(base.Cfg.ServerAddr, nil, 10, 0)
     if err != nil {
-        log.Printf("[client] failed to dial kcp server %s %v", config.ServerAddr, err)
+        base.Error("failed to dial kcp server", base.Cfg.ServerAddr)
         return nil
     }
 
@@ -58,13 +59,13 @@ func connectKCPServer(config config.Config) net.Conn {
     conn.SetReadDeadline(time.Now().Add(time.Minute))
     conn.SetWriteDeadline(time.Now().Add(time.Minute))
 
-    log.Printf("[client] kcp tunnel connected %s", config.ServerAddr)
+    base.Info("kcp tunnel connected", base.Cfg.ServerAddr)
 
     return conn
 }
 
-func connectWSServer(config config.Config) net.Conn {
-    url := fmt.Sprintf("%s://%s%s", config.Protocol, config.ServerAddr, enum.WSPath)
+func connectWSServer() net.Conn {
+    url := fmt.Sprintf("%s://%s%s", base.Cfg.Protocol, base.Cfg.ServerAddr, enum.WSPath)
     dialer := &websocket.Dialer{
         NetDial: func(network, addr string) (net.Conn, error) {
             return net.DialTimeout(network, addr, time.Duration(enum.Timeout)*time.Second)
@@ -85,9 +86,9 @@ func connectWSServer(config config.Config) net.Conn {
     }
     wsconn, _, err := dialer.Dial(url, nil)
     if err != nil {
-        log.Printf("[client] failed to dial websocket %s %v", url, err)
+        base.Error("failed to dial websocket", url)
         return nil
     }
-    log.Printf("[client] ws tunnel connected %s", url)
+    base.Info("ws tunnel connected", url)
     return wsconn.NetConn()
 }
