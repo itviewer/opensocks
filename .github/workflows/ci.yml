@@ -24,4 +24,3 @@ jobs:
     - name: Build
       run: |
         go build -v main.go
-        go build -v libopensocks.go
