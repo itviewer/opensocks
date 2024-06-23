@@ -10,7 +10,6 @@ import (
 )
 
 type KCPProxy struct {
-    config   base.Config
     listener *kcp.Listener
 }
 
@@ -18,10 +17,10 @@ func (p *KCPProxy) StartProxyServer() {
     // key := pbkdf2.Key([]byte(p.config.Key), []byte("opensocks@2022"), 4096, 32, sha1.New)
     // block, _ := kcp.NewSalsa20BlockCrypt(key)
     var err error
-    p.listener, err = kcp.ListenWithOptions(p.config.ServerAddr, nil, 10, 0)
+    p.listener, err = kcp.ListenWithOptions(base.Cfg.ServerAddr, nil, 10, 0)
 
     if err == nil {
-        base.Info("opensocks kcp server started on", p.config.ServerAddr)
+        base.Info("opensocks kcp server started on", base.Cfg.ServerAddr)
         for {
             conn, err := p.listener.AcceptKCP()
             if err != nil {
